@@ -61,7 +61,7 @@ def check_story(text):
 
 def main():
     check_story(STORY)
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
     # No trailing newline: the file is exactly the story, which also keeps
@@ -69,6 +69,14 @@ def main():
     # text first).
     with open(path, "w", encoding="utf-8", newline="") as f:
         f.write(STORY)
+    # Verify what was written: read it back and re-check the gate on the
+    # exact bytes the judge will read, so a partial write can never pass
+    # silently.
+    with open(path, "r", encoding="utf-8", newline="") as f:
+        written = f.read()
+    if written != STORY:
+        raise SystemExit("entry.txt does not match the story after writing")
+    check_story(written)
     print("wrote %d chars (%d bytes) to %s"
           % (len(STORY), len(STORY.encode("utf-8")), path))
     return 0
